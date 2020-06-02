@@ -178,6 +178,7 @@ services:
       GROUPER_DATABASE_USERNAME: "grouper"
       GROUPER_DATABASE_PASSWORD: "grouper"
       GROUPER_MORPHSTRING_ENCRYPT_KEY: "THISISSUPERSECRET!"
+      GROUPER_AUTO_DDL_UPTOVERSION: "v2.5.*"
 networks:
   graylog:
   idp:
