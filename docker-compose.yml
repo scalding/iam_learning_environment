@@ -76,15 +76,18 @@ services:
     - ./reverse-proxy/certs/:/certs/
   directory:
     build: ./directory
-    logging:
-      driver: gelf
-      options:
-        gelf-address: udp://localhost:12201
+#    logging:
+#      driver: gelf
+#      options:
+#        gelf-address: udp://localhost:12201
     networks:
       - idp
       - grouper
     ports:
     - 389:389
+    volumes:
+    - directory_data:/var/lib/ldap
+    - directory_config:/etc/ldap/slapd.d
     environment:
       LDAP_BASE_DN: "dc=unicon,dc=local"
       LDAP_DOMAIN: "unicon.local"
@@ -128,7 +131,7 @@ services:
     environment:
       - POSTGRES_PASSWORD=supersecret
   grouper-ui:
-    build: ../../..
+    build: ./grouper
     command: ui
     labels:
       - "traefik.http.routers.grouperui.rule=Host(`grouper-ui.unicon.local`)"
@@ -147,10 +150,34 @@ services:
       - graylog
       - grouper
       - reverse-proxy
+    volumes:
+      - ./grouper/src/main/docker/slashRoot/opt/grouper/grouperWebapp/WEB-INF/classes/log4j.properties.sample:/opt/grouper/grouperWebapp/WEB-INF/classes/log4j.properties
+      - ./grouper/src/main/docker/slashRoot/opt/grouper/grouperWebapp/WEB-INF/classes/grouper.hibernate.properties.sample:/opt/grouper/grouperWebapp/WEB-INF/classes/grouper.hibernate.properties
     environment:
       GROUPER_DATABASE_URL: "jdbc:postgresql://database/grouper"
       GROUPER_DATABASE_USERNAME: "grouper"
       GROUPER_DATABASE_PASSWORD: "grouper"
+      GROUPER_MORPHSTRING_ENCRYPT_KEY: "THISISSUPERSECRET!"
+      GROUPER_AUTO_DDL_UPTOVERSION: "v2.5.*"
+      GROUPER_RUN_TOMCAT_NOT_SUPERVISOR: "true"
+      GROUPER_UI_CONFIGURATION_EDITOR_SOURCEIPADDRESSES: "0.0.0.0/0"
+      GROUPER_UI_GROUPER_AUTH: "true"
+      GROUPERSYSTEM_QUICKSTART_PASS: "letmein7"
+      RUN_SHIB_SP: "false"
+  grouper-daemon:
+    build: ./grouper
+    command: daemon
+    depends_on:
+      - database
+      - directory
+    networks:
+      - graylog
+      - grouper
+    environment:
+      GROUPER_DATABASE_URL: "jdbc:postgresql://database/grouper"
+      GROUPER_DATABASE_USERNAME: "grouper"
+      GROUPER_DATABASE_PASSWORD: "grouper"
+      GROUPER_MORPHSTRING_ENCRYPT_KEY: "THISISSUPERSECRET!"
 networks:
   graylog:
   idp:
@@ -164,4 +191,8 @@ volumes:
   graylog_data:
     driver: local
   database_data:
+    driver: local
+  directory_data:
+    driver: local
+  directory_config:
     driver: local
