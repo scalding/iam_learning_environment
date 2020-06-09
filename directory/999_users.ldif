@@ -8,6 +8,11 @@ objectClass: organizationalUnit
 ou: Groups
 description: Groups
 
+dn: ou=Grouper, ou=Groups,dc=unicon,dc=local
+objectClass: organizationalUnit
+ou: Grouper
+description: Grouper Groups
+
 dn: uid=jsmith,ou=People,dc=unicon,dc=local
 objectClass: organizationalPerson
 objectClass: person
